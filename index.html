@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Поиск по архиву Google Drive</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{ --brand:#6d5f51; --page-bg:#fdfaf2; --text-main:#3d352d; --text-light:#8a8175; --border-color:#d9d1c5; --sidebar-bg:#f9f7f4; }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin: 0;}
+    body{ background:#fdfaf2; color:var(--text-main); font-family:'Lora',serif; padding:16px; }
+    .book-container{position:relative;max-width:1200px;margin:0 auto;}
+    .page-container{ background:var(--page-bg); border-radius:10px; border:1px solid #c9c1b3; }
+    .inner-pad{padding:24px}
+    .topbar { position:sticky; top:0; z-index:10; background:var(--page-bg); padding-bottom: 16px; margin-bottom: 16px; border-bottom:2px solid var(--border-color); }
+    .controls-row { display: flex; gap: 16px; align-items: center; }
+    #searchInput { width:100%; height:48px; padding:0 14px; border:1px solid var(--border-color); border-radius:10px; font-family:'Lora',serif; font-size:.95rem; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.05); transition:border-color .2s, box-shadow .2s; }
+    #searchInput:focus { outline: none; border-color:var(--brand); box-shadow: 0 0 0 3px rgba(109, 95, 81, .15) !important; }
+    #searchInput:disabled { background-color: #f5f5f5; }
+    .view-toggle { display: flex; flex-shrink: 0; }
+    .view-toggle button { background: #fff; border: 1px solid var(--border-color); padding: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
+    .view-toggle button:first-child { border-radius: 8px 0 0 8px; border-right: none;} .view-toggle button:last-child { border-radius: 0 8px 8px 0; }
+    .view-toggle button:hover { background-color: var(--sidebar-bg); } .view-toggle button.active { background-color: var(--brand); color: #fff; border-color: var(--brand); }
+    .view-toggle svg { width: 24px; height: 24px; }
+    #breadcrumbs { font-size: 0.9rem; color: var(--text-light); white-space: nowrap; overflow-x: auto; padding-top: 16px; scrollbar-width: none; -ms-overflow-style: none; }
+    #breadcrumbs::-webkit-scrollbar { display: none; } #breadcrumbs a { color: var(--brand); text-decoration: none; cursor: pointer; }
+    #breadcrumbs a:hover { text-decoration: underline; } #breadcrumbs span:not(.separator) { color: var(--text-main); font-weight: 600; }
+    #breadcrumbs .separator { margin: 0 8px; } #file-list { min-height: 300px; max-height: 60vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 14px; position: relative; background: #fff; }
+    #file-list.view-list .list-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-size: 1rem; transition: background-color 0.2s; }
+    #file-list.view-list .list-item:last-child { border-bottom: none; } #file-list.view-list .list-item:hover { background-color: var(--sidebar-bg); }
+    #file-list.view-list .list-item img { width: 20px; height: 20px; margin-right: 15px; flex-shrink: 0; }
+    #file-list.view-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 16px; }
+    #file-list.view-grid .list-item { display: flex; flex-direction: column; text-align: center; border: 1px solid transparent; border-radius: 8px; transition: background-color 0.2s, border-color 0.2s; padding: 8px; }
+    #file-list.view-grid .list-item:hover { background-color: var(--sidebar-bg); border-color: var(--border-color); }
+    #file-list.view-grid .thumbnail-container { width: 100%; height: 100px; background-color: var(--sidebar-bg); border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; overflow: hidden; }
+    #file-list.view-grid .thumbnail-container img { width: 100%; height: 100%; object-fit: cover; }
+    #file-list.view-grid .thumbnail-container svg { width: 40px; height: 40px; color: var(--text-light); }
+    #file-list.view-grid .item-name { font-size: 0.85rem; line-height: 1.3; word-break: break-word; }
+    .list-item.clickable { cursor: pointer; } a.list-item-link { color: var(--text-main); text-decoration: none; }
+    mark { background-color: #ffe082; padding: 1px 2px; border-radius: 3px; }
+    .message { text-align: center; padding: 40px 20px; color: var(--text-light); position: absolute; width: 100%; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.1rem; }
+    #image-viewer { position: fixed; inset: 0; background-color: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+    #image-viewer.visible { opacity: 1; visibility: visible; } #image-viewer.is-loading { cursor: wait; }
+    #image-viewer img { max-width: 90vw; max-height: 90vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 4px; transition: opacity 0.2s; }
+    #image-viewer.is-loading img { opacity: 0.5; }
+    #image-viewer .close-btn { position: absolute; top: 15px; right: 20px; width: 44px; height: 44px; background: none; border: none; color: white; font-size: 2.5rem; line-height: 1; cursor: pointer; text-shadow: 0 0 5px black; }
+    .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 3rem; font-weight: 100; width: 50px; height: 80px; border-radius: 8px; cursor: pointer; z-index: 10000; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
+    .nav-btn:hover { background-color: rgba(0,0,0,0.5); } .nav-btn[hidden] { display: none; } .prev-btn { left: 20px; } .next-btn { right: 20px; }
+    @media (max-width: 768px) { body { padding: 8px; } .inner-pad { padding: 12px; } .intro-card h1 { font-size: 1.4rem; } .intro-card p { font-size: 0.95rem; } #file-list { max-height: 75vh; } .nav-btn { width: 40px; height: 60px; font-size: 2rem; } .prev-btn { left: 5px; } .next-btn { right: 5px; } }
+  </style>
+</head>
+<body>
+  <div class="book-container">
+    <div class="page-container">
+      <div class="inner-pad">
+        <div class="topbar">
+          <div class="controls-row">
+            <input type="text" id="searchInput" placeholder="Инициализация базы данных..." disabled>
+            <div class="view-toggle">
+              <button id="view-list-btn" class="active" title="Список"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M3,4H21V6H3V4M3,11H21V13H3V11M3,18H21V20H3V18Z" /></svg></button>
+              <button id="view-grid-btn" title="Сетка"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M3,3V11H11V3H3M9,9H5V5H9V9M3,13V21H11V13H3M9,19H5V15H9V19M13,3V11H21V3H13M19,9H15V5H19V9M13,13V21H21V13H13M19,19H15V15H19V19Z" /></svg></button>
+            </div>
+          </div>
+          <div id="breadcrumbs"></div>
+        </div>
+        <main class="content"><div id="file-list" class="view-list"><div class="message">Инициализация...</div></div></main>
+      </div>
+    </div>
+  </div>
+  <div id="image-viewer">
+    <button class="close-btn">&times;</button>
+    <button class="nav-btn prev-btn" title="Предыдущее изображение (←)">‹</button>
+    <img id="viewer-img" src="" alt="Просмотр изображения">
+    <button class="nav-btn next-btn" title="Следующее изображение (→)">›</button>
+  </div>
+  
+  <script type="module">
+    import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm';
+
+    const PARQUET_URL = 'index.parquet';
+    const ROOT_FOLDER_ID = '13iCVjqaH-P-E8i4ENjnIbHBBSSHkV0Bn';
+    const ROOT_FOLDER_NAME = 'Главная';
+
+    // ... (весь остальной JavaScript код остается без изменений) ...
+    const searchInput = document.getElementById('searchInput'); const breadcrumbsContainer = document.getElementById('breadcrumbs'); const fileListContainer = document.getElementById('file-list'); const imageViewer = document.getElementById('image-viewer'); const viewerImg = document.getElementById('viewer-img'); const viewListBtn = document.getElementById('view-list-btn'); const viewGridBtn = document.getElementById('view-grid-btn'); const prevBtn = document.querySelector('.prev-btn'); const nextBtn = document.querySelector('.next-btn'); let db, connection; let navigationPath = []; let debounceTimeout; let currentViewMode = 'list'; let currentlyDisplayedItems = []; let viewerImageList = []; let currentImageIndex = -1;
+    async function initializeApp() { try { fileListContainer.innerHTML = `<div class="message">Загрузка ядра базы данных...</div>`; const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles(); const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES); const worker_url = URL.createObjectURL(new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'application/javascript'})); const worker = new Worker(worker_url); const logger = new duckdb.ConsoleLogger(); db = new duckdb.AsyncDuckDB(logger, worker); await db.instantiate(bundle.mainModule, bundle.pthreadWorker); URL.revokeObjectURL(worker_url); fileListContainer.innerHTML = `<div class="message">Подключение к базе данных...</div>`; await db.registerFileURL('index.parquet', PARQUET_URL, duckdb.DuckDBDataProtocol.HTTP, false); connection = await db.connect(); searchInput.disabled = false; searchInput.placeholder = "Искать по всей базе..."; await navigateTo(ROOT_FOLDER_ID); } catch (err) { console.error("Ошибка инициализации DuckDB:", err); fileListContainer.innerHTML = `<div class="message error">Не удалось загрузить базу данных.</div>`; } }
+    async function queryDB(sql) { const result = await connection.query(sql); return result.toArray().map(row => row.toJSON()); }
+    searchInput.addEventListener('input', (e) => { clearTimeout(debounceTimeout); const searchTerm = e.target.value.trim(); if (searchTerm.length > 2) { breadcrumbsContainer.style.display = 'none'; fileListContainer.innerHTML = `<div class="message">Поиск...</div>`; debounceTimeout = setTimeout(() => performSearch(searchTerm), 300); } else if (searchTerm.length === 0) { const lastFolderId = navigationPath.length > 0 ? navigationPath.at(-1).id : ROOT_FOLDER_ID; navigateTo(lastFolderId); } else { breadcrumbsContainer.style.display = 'none'; fileListContainer.innerHTML = `<div class="message">Введите больше символов.</div>`; } });
+    async function performSearch(term) { const sql = `SELECT * FROM 'index.parquet' WHERE lower(name) LIKE '%${term.toLowerCase()}%' LIMIT 500;`; const results = await queryDB(sql); displayItems(results, true); }
+    async function navigateTo(folderId) { searchInput.value = ''; breadcrumbsContainer.style.display = 'block'; fileListContainer.innerHTML = `<div class="message">Загрузка содержимого...</div>`; const sql = `SELECT * FROM 'index.parquet' WHERE parentId = '${folderId}' ORDER BY CASE WHEN mimeType = 'application/vnd.google-apps.folder' THEN 0 ELSE 1 END, name COLLATE NOCASE ASC;`; const children = await queryDB(sql); await buildBreadcrumbs(folderId); displayItems(children); }
+    async function buildBreadcrumbs(leafFolderId) { const path = []; let currentId = leafFolderId; while (currentId && currentId !== ROOT_FOLDER_ID) { const result = await queryDB(`SELECT id, name, parentId FROM 'index.parquet' WHERE id = '${currentId}'`); if (result.length === 0) break; const item = result[0]; path.unshift({ id: item.id, name: item.name }); currentId = item.parentId; } path.unshift({ id: ROOT_FOLDER_ID, name: ROOT_FOLDER_NAME }); navigationPath = path; renderBreadcrumbs(); }
+    function displayItems(items, isSearchResult = false) { currentlyDisplayedItems = items; fileListContainer.innerHTML = ''; if (items.length === 0) { fileListContainer.innerHTML = `<div class="message">${isSearchResult ? 'Ничего не найдено' : 'Эта папка пуста'}.</div>`; return; } items.forEach(item => fileListContainer.appendChild(createListItem(item, isSearchResult))); }
+    function highlightText(text, query) { if (!query || !text) return text; const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); return text.replace(new RegExp(`(${esc})`, 'gi'), `<mark>$1</mark>`); }
+    function createListItem(item, isSearchResult) { const itemElement = document.createElement('div'); itemElement.className = 'list-item'; const isImage = item.mimeType?.startsWith('image/'); const query = isSearchResult ? searchInput.value.trim() : ''; if (currentViewMode === 'list') { const icon = document.createElement('img'); icon.src = item.iconLink; itemElement.appendChild(icon); } else { const thumbContainer = document.createElement('div'); thumbContainer.className = 'thumbnail-container'; if (isImage && item.thumbnailLink) { const thumbImg = document.createElement('img'); thumbImg.src = item.thumbnailLink; thumbContainer.appendChild(thumbImg); } else { const iconSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); iconSvg.setAttribute("viewBox", "0 0 24 24"); const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); if (item.mimeType === 'application/vnd.google-apps.folder') { path.setAttribute("d", "M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"); } else { path.setAttribute("d", "M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18H6V16H15V18M18,14H6V12H18V14Z"); } path.setAttribute("fill", "currentColor"); iconSvg.appendChild(path); thumbContainer.appendChild(iconSvg); } itemElement.appendChild(thumbContainer); } const nameEl = document.createElement('span'); nameEl.className = 'item-name'; nameEl.innerHTML = highlightText(item.name, query); if (item.mimeType === 'application/vnd.google-apps.folder') { itemElement.classList.add('clickable'); itemElement.onclick = () => navigateTo(item.id); itemElement.appendChild(nameEl); } else if (isImage) { itemElement.classList.add('clickable'); itemElement.onclick = () => openImageViewer(item.id); itemElement.appendChild(nameEl); } else { const link = document.createElement('a'); link.href = item.webViewLink; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'list-item-link'; if (currentViewMode === 'list') { link.appendChild(nameEl); itemElement.appendChild(link); } else { itemElement.appendChild(nameEl); itemElement.onclick = () => window.open(item.webViewLink, '_blank'); } } if (isSearchResult) { itemElement.classList.add('search-result'); itemElement.onclick = async () => { if (item.parentId) { await navigateTo(item.parentId); } }; } return itemElement; }
+    function openImageViewer(clickedFileId) { viewerImageList = currentlyDisplayedItems.filter(item => item.mimeType?.startsWith('image/')); currentImageIndex = viewerImageList.findIndex(img => img.id === clickedFileId); if (currentImageIndex === -1) return; showImageAtIndex(currentImageIndex); imageViewer.classList.add('visible'); window.addEventListener('keydown', handleViewerKeys); }
+    function showImageAtIndex(index) { if (index < 0 || index >= viewerImageList.length) return; currentImageIndex = index; const item = viewerImageList[index]; imageViewer.classList.add('is-loading'); viewerImg.onload = () => imageViewer.classList.remove('is-loading'); viewerImg.onerror = () => imageViewer.classList.remove('is-loading'); viewerImg.src = `https://lh3.googleusercontent.com/d/${item.id}`; prevBtn.hidden = (index === 0); nextBtn.hidden = (index >= viewerImageList.length - 1); }
+    function closeImageViewer() { imageViewer.classList.remove('visible'); viewerImg.src = ''; window.removeEventListener('keydown', handleViewerKeys); viewerImageList = []; currentImageIndex = -1; }
+    function handleViewerKeys(e) { if (e.key === 'Escape') closeImageViewer(); if (e.key === 'ArrowLeft' && !prevBtn.hidden) showImageAtIndex(currentImageIndex - 1); if (e.key === 'ArrowRight' && !nextBtn.hidden) showImageAtIndex(currentImageIndex + 1); }
+    imageViewer.addEventListener('click', (e) => { if(e.target === imageViewer || e.target.classList.contains('close-btn')) closeImageViewer() });
+    prevBtn.addEventListener('click', () => showImageAtIndex(currentImageIndex - 1));
+    nextBtn.addEventListener('click', () => showImageAtIndex(currentImageIndex + 1));
+    function setViewMode(mode) { if (currentViewMode === mode) return; currentViewMode = mode; fileListContainer.className = `view-${mode}`; viewListBtn.classList.toggle('active', mode === 'list'); viewGridBtn.classList.toggle('active', mode === 'grid'); displayItems(currentlyDisplayedItems, searchInput.value.trim().length > 1); }
+    viewListBtn.addEventListener('click', () => setViewMode('list')); viewGridBtn.addEventListener('click', () => setViewMode('grid'));
+    function renderBreadcrumbs() { breadcrumbsContainer.innerHTML = ''; navigationPath.forEach((pathItem, index) => { if (index > 0) { const sep = document.createElement('span'); sep.className = 'separator'; sep.textContent = '/'; breadcrumbsContainer.appendChild(sep); } if (index < navigationPath.length - 1) { const link = document.createElement('a'); link.href = '#'; link.textContent = pathItem.name; link.onclick = (e) => { e.preventDefault(); navigateTo(pathItem.id); }; breadcrumbsContainer.appendChild(link); } else { const span = document.createElement('span'); span.textContent = pathItem.name; breadcrumbsContainer.appendChild(span); } }); }
+    
+    initializeApp();
+  </script>
+</body>
+</html>
