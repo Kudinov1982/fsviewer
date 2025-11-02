@@ -1,0 +1,16 @@
+[
+  { "name": "Geno-DB Астрахань", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_astrahan_optimized.json.gz" },
+  { "name": "Geno-DB Казань", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_kazan_optimized.json.gz" },
+  { "name": "Geno-DB Карелия", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_karelia_optimized.json.gz" },
+  { "name": "Geno-DB Нижний Новгород", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_nizhny_novgorod_optimized.json.gz" },
+  { "name": "Geno-DB Псков", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_pskov_optimized.json.gz" },
+  { "name": "Geno-DB Самара", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_samara_optimized.json.gz" },
+  { "name": "Geno-DB Сызрань", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_syzran_optimized.json.gz" },
+  { "name": "Geno-DB Тверь", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_tver_optimized.json.gz" },
+  { "name": "Geno-DB Тобольск", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_tobolsk_optimized.json.gz" },
+  { "name": "Geno-DB Тольятти", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_tolyatti_optimized.json.gz" },
+  { "name": "Geno-DB Томск", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_tomsk_optimized.json.gz" },
+  { "name": "Geno-DB Тула", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_tula_optimized.json.gz" },
+  { "name": "Geno-DB Удмуртия", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_udmurtia_optimized.json.gz" },
+  { "name": "Geno-DB Ульяновск", "url": "https://cdn.jsdelivr.net/gh/Kudinov1982/fsviewer@main/genodb_structure_ulyanovsk_optimized.json.gz" }
+]
